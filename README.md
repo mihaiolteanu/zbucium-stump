@@ -1,5 +1,7 @@
 # zbucium-stump
-StumpWM interface for the last.fm music player [zbucium](https://github.com/mihaiolteanu/lastfm)
+StumpWM interface for the [zbucium](https://github.com/mihaiolteanu/zbucium)
+last.fm music player. No actual music files needed on your pc. It's all played
+from youtube with mpv and info from last.fm.
 
 # Install
 
@@ -32,8 +34,9 @@ candidates, interactively. And if I ever want to leave Emacs, I can open the
 browser with the currently playing song's youtube video at any time with the
 press of a key.
 
-Enough talk.
-![zbucium-play-artist](/home/mihai/Downloads/zbucium-screens/zbucium-playing-artist.gif)
+Enough talk!
+
+![zbucium play artist](https://user-images.githubusercontent.com/8273519/59374522-b2520600-8d54-11e9-97c2-8cd21f5aa5c5.gif)
 
 What happened? First, I'm calling the stumpwm command defined by zbucium's
 module, zbucium-play-artist. I'm only calling this as such for illustration
@@ -46,25 +49,26 @@ Here is another nice one. I can choose to play an album. Again it asks me for an
 artist (non random by default) and displays the albums for this artist. If I
 would to chose one at this stage, it will play it, starting from the first song
 till the last, and back again. But I can also browse the album contents, go back
-to the album page, chose another album, etc. In this case, I've chosen to play a
+to the album page, chose another album (`C-l`), etc. In this case, I've chosen to play a
 single song, from one of the albums.
 
-zbucium-play-album
+![zbucium play album](https://user-images.githubusercontent.com/8273519/59374519-b1b96f80-8d54-11e9-8963-43c9b50c687b.gif)
 
 All the commands expected from a player are available. Stop, pause, skip song
 and seek, either as standalone command (+- 5 seconds seek, for exemple), or interactively.
 
-zbucium-seek-song
+![zbucium seek song](https://user-images.githubusercontent.com/8273519/59374524-b2520600-8d54-11e9-8a81-bcb8cca79250.gif)
 
-The same song is playing. You can go forward or backward, in real time. As you
-can see, the timings are not quite right. This is a limitation of the player
-used, mpv, which is clearly stated in their documentation as being only an
-approximation. Still, good enough for small searches.
+The same song is playing. You can go forward or backward, in real time (with the
+`,` and '.' keys, respectively). As you can see, the timings are not quite
+right. This is a limitation of the player used, mpv, which is clearly stated in
+their documentation as being only an approximation. Still, good enough for small
+searches.
 
 Every song played also saves the lyrics. So let's try to play a song, by
 searching it's lyrics.
 
-zbucium-search-song
+![zbucium search song](https://user-images.githubusercontent.com/8273519/59374523-b2520600-8d54-11e9-8fb0-5b13d3d05dbe.gif)
 
 The player is stopped initially. Suddently, I have this `i feel i know you` tune
 in my head. Who is playing that?! Fire up the song search, put in the verse, or
