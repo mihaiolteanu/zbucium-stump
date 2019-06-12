@@ -1,29 +1,90 @@
 (in-package :zbucium-stump)
 
-(ql:quickload :zbucium)
+(defparameter *ntracks* 20
+  "Number of tracks to request from lastfm. These are the first best number of
+  tracks for the given artist, according to the last.fm charts.")
+
+(defparameter *user-ntracks* 500
+  "Number of songs to consider when playing a list of loved songs.")
+
+(defparameter *nartists* 20
+  "Number of artists to request from lastfm. These are used when playing similar
+  artists or artists with a given tag.")
+
+(defun album-song-switcher (menu)
+  "Switch between an album name an the songs contained on that album. Used as a
+function in a menu-selection."
+  (let ((selected (nth (menu-state-selected menu)
+                       (menu-state-table menu))))
+    (cond ((string-equal (third selected) "album")
+           (setf (menu-state-table menu)
+                 (mapcar (lambda (song)
+                           (list song (second selected) "song"))
+                         (lastfm:album-getinfo (second selected) (first selected)))))
+          ((string-equal (third selected) "song")
+           (setf (menu-state-table menu)
+                 (mapcar (lambda (alb)
+                           (list alb (second selected) "album"))
+                         (lastfm:artist-gettopalbums (second selected) 5))))
+          (t nil))
+    (setf (menu-state-selected menu) 0)))
 
 (defcommand zbucium-play-song (artist)
     ((:string "Artist: "))
   (when artist
     (let ((song (select-from-menu
                  (current-screen)
-                 ;; Enable dynamic searching by having a list of lists
-                 (mapcar #'list
-                         (lastfm:artist-gettoptracks artist 20))
+                 ;; The selection items must be lists (stumpwm requirement)
+                 (mapcar #'list (artist-gettoptracks artist *ntracks*))
                  (format nil "~a songs: " artist))))
       (when song
-        (bt:make-thread
-         (lambda ()
-           (play-song artist (first song))))))))
+        (play-song artist (first song))))))
 
 (defcommand zbucium-play-artist (artist random)
     ((:string "Artist: ")
      (:y-or-n "Random? "))
-  (play-artist artist 20 random))
+  (play-artist artist *ntracks* random))
 
-(defcommand zbucium-play-similar-artist (artist)
+(defcommand zbucium-play-album (artist)
     ((:string "Artist: "))
-  (play-artist-similar-artists artist 10 10))
+  (let ((albums (mapcar (lambda (alb)
+                          (list alb artist "album"))
+                        (lastfm:artist-gettopalbums artist 5))))
+    (when albums
+      (let ((selected
+              (select-from-menu
+               (current-screen)
+               albums "Play song or album: "
+               0
+               (let ((m (stumpwm:make-sparse-keymap)))
+                 (define-key m (kbd "C-l") #'album-song-switcher)
+                 m))))
+        (when selected
+          (if (string-equal (third selected) "album")
+              (play-artist-album (second selected) (first selected))
+              (play-song (second selected) (first selected))))))))
+
+(defcommand zbucium-play-tag (tagname random)
+    ((:string "Tag/Genre: ")
+     (:y-or-n "Random? "))
+  (play-tag tagname *ntracks* random))
+
+(defcommand zbucium-play-user-songs (username random)
+    ((:string "Lastfm username: ")
+     (:y-or-n "Random? "))
+  (play-user-songs username *user-ntracks* random))
+
+(defcommand zbucium-play-my-loved-songs (random)
+    ((:y-or-n "Random (my loved songs)? "))
+  (play-my-loved-songs *user-ntracks* random))
+
+(defcommand zbucium-play-artist-similar (artist)
+    ((:string "Artist: "))
+  (play-artist-similar artist *nartists* *ntracks*))
+
+(defcommand zbucium-play-tag-similar (tag)
+    ((:string "Tag/genre: "))
+  (play-tag-similar tag *nartists* *ntracks*))
 
 (defcommand zbucium-what-is-playing () ()
   (if-let ((song (what-is-playing-as-string)))
@@ -35,6 +96,18 @@
     (if-let ((song (what-is-playing-as-string)))
       (message (format nil "~a ~% ~a" song (song-lyrics)))
       (message "Player is stopped"))))
+
+(defcommand zbucium-love-song () ()
+  (love-song))
+
+(defcommand zbucium-unlove-song () ()
+  (unlove-song))
+
+(defcommand zbucium-next-song () ()
+  (next-song))
+
+(defcommand zbucium-stop () ()
+  (stop))
 
 (defcommand zbucium-search-song (lyrics)
     ((:string "Search lyrics: "))
@@ -56,41 +129,6 @@
        (lambda ()
          (play-song (second selected-song)
                     (third selected-song)))))))
-
-(defun album-song-switcher (menu)
-  (let ((selected (nth (menu-state-selected menu)
-                       (menu-state-table menu))))
-    (cond ((string-equal (third selected) "album")
-           (setf (menu-state-table menu)
-                 (mapcar (lambda (song)
-                           (list song (second selected) "song"))
-                         (lastfm:album-getinfo (second selected) (first selected)))))
-          ((string-equal (third selected) "song")
-           (setf (menu-state-table menu)
-                 (mapcar (lambda (alb)
-                           (list alb (second selected) "album"))
-                         (lastfm:artist-gettopalbums (second selected) 5))))
-          (t nil))
-    (setf (menu-state-selected menu) 0)))
-
-(defcommand zbucium-play-album (artist)
-    ((:string "Artist: "))
-  (let ((albums (mapcar (lambda (alb)
-                          (list alb artist "album"))
-                        (lastfm:artist-gettopalbums artist 5))))
-    (when albums
-      (let ((selected
-              (select-from-menu
-               (current-screen)
-               albums "Play song or album: "
-               0
-               (let ((m (stumpwm:make-sparse-keymap)))
-                 (define-key m (kbd "C-l") #'album-song-switcher)
-                 m))))
-        (when selected
-          (if (string-equal (third selected) "album")
-              (play-artist-album (second selected) (first selected))
-              (play-song (second selected) (first selected))))))))
 
 (defcommand zbucium-play/pause () ()
   (play/pause))
@@ -128,8 +166,7 @@
 (defun total-time-string ()
   (string-to-time (duration)))
 
-(define-interactive-keymap seek-song ()
-    ;; (:on-enter #'song-progress)
+(define-interactive-keymap zbucium-seek-song ()
   ((kbd ",") "zbucium-seek-backward")
   ((kbd ".") "zbucium-seek-forward"))
 
@@ -142,7 +179,10 @@
                  collect " ")))
     (reduce (lambda (char rest)
               (concatenate 'string char rest))
-            (append '("0:00 ") done `(,(time-pos-string)) remaining `(,(total-time-string))))))
+            (append '("0:00 ") done
+                    `(,(time-pos-string))
+                    remaining
+                    `(,(total-time-string))))))
 
 (defun song-progress ()
   (message (progress-bar (/ (round (percent-pos)) 2) 50)))
@@ -155,15 +195,3 @@
 
 (defcommand zbucium-turn-video-on () ()
   (turn-video-on))
-
-(defcommand zbucium-next-song () ()
-  (next-song))
-
-(defcommand zbucium-stop () ()
-  (stop))
-
-(defcommand zbucium-love-song () ()
-  (love-song))
-
-(defcommand zbucium-unlove-song () ()
-  (unlove-song))
