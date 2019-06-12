@@ -1,14 +1,8 @@
-(in-package :muse-player-stump)
+(in-package :zbucium-stump)
 
-(ql:quickload :muse-player)
+(ql:quickload :zbucium)
 
-(defun playing-song-string ()
-  (let ((artist-and-song (what-is-playing)))
-    (format nil "~a - ~a"
-            (string-capitalize (first artist-and-song))
-            (string-capitalize (second artist-and-song)))))
-
-(defcommand muse-play-song (artist)
+(defcommand zbucium-play-song (artist)
     ((:string "Artist: "))
   (when artist
     (let ((song (select-from-menu
@@ -22,25 +16,27 @@
          (lambda ()
            (play-song artist (first song))))))))
 
-(defcommand muse-play-artist (artist random)
+(defcommand zbucium-play-artist (artist random)
     ((:string "Artist: ")
      (:y-or-n "Random? "))
   (play-artist artist 20 random))
 
-(defcommand muse-play-similar-artist (artist)
+(defcommand zbucium-play-similar-artist (artist)
     ((:string "Artist: "))
   (play-artist-similar-artists artist 10 10))
 
-(defcommand muse-what-is-playing () ()
-  (message (playing-song-string)))
+(defcommand zbucium-what-is-playing () ()
+  (if-let ((song (what-is-playing-as-string)))
+    (message song)
+    (message "Player is stopped")))
 
-(defcommand muse-lyrics () ()
+(defcommand zbucium-lyrics () ()
   (let ((*suppress-echo-timeout* t))
-    (message (format nil "~a ~% ~a"
-                     (playing-song-string)
-                     (song-lyrics)))))
+    (if-let ((song (what-is-playing-as-string)))
+      (message (format nil "~a ~% ~a" song (song-lyrics)))
+      (message "Player is stopped"))))
 
-(defcommand muse-search-song (lyrics)
+(defcommand zbucium-search-song (lyrics)
     ((:string "Search lyrics: "))
   (let ((selected-song
           (select-from-menu
@@ -77,7 +73,7 @@
           (t nil))
     (setf (menu-state-selected menu) 0)))
 
-(defcommand muse-play-album (artist)
+(defcommand zbucium-play-album (artist)
     ((:string "Artist: "))
   (let ((albums (mapcar (lambda (alb)
                           (list alb artist "album"))
@@ -97,27 +93,27 @@
               (play-song (second selected) (first selected))))))))
 
 
-;; (muse-play-album "anathema")
+;; (zbucium-play-album "anathema")
 ;; (setf stumpwm::*menu-maximum-height* 5)
 
-;; (defcommand muse-pause () ()
+;; (defcommand zbucium-pause () ()
 ;;   (pause))
 
-(defcommand muse-play/pause () ()
+(defcommand zbucium-play/pause () ()
   (play/pause))
 
-(defcommand muse-replay () ()
+(defcommand zbucium-replay () ()
   (replay))
 
-(defcommand muse-seek-forward () ()
+(defcommand zbucium-seek-forward () ()
   (seek 5)
   (song-progress))
 
-(defcommand muse-seek-backward () ()
+(defcommand zbucium-seek-backward () ()
   (seek -5)
   (song-progress))
 
-(defcommand muse-percent-pos () ()
+(defcommand zbucium-percent-pos () ()
   (message (percent-pos)))
 
 (defun string-to-time (str)
@@ -141,8 +137,8 @@
 
 (define-interactive-keymap seek-song ()
     ;; (:on-enter #'song-progress)
-  ((kbd ",") "muse-seek-backward")
-  ((kbd ".") "muse-seek-forward"))
+  ((kbd ",") "zbucium-seek-backward")
+  ((kbd ".") "zbucium-seek-forward"))
 
 (defun progress-bar (current total)
   (let* ((done
@@ -158,25 +154,25 @@
 (defun song-progress ()
   (message (progress-bar (/ (round (percent-pos)) 2) 50)))
 
-(defcommand muse-time-pos () ()
+(defcommand zbucium-time-pos () ()
   (message (time-pos)))
 
-(defcommand muse-switch-to-browser () ()
+(defcommand zbucium-switch-to-browser () ()
   (switch-to-browser))
 
-(defcommand muse-turn-video-on () ()
+(defcommand zbucium-turn-video-on () ()
   (turn-video-on))
 
-(defcommand muse-next-song () ()
+(defcommand zbucium-next-song () ()
   (next-song))
 
-(defcommand muse-stop () ()
+(defcommand zbucium-stop () ()
   (stop))
 
-(defcommand muse-love-song () ()
+(defcommand zbucium-love-song () ()
   (love-song))
 
-(defcommand muse-unlove-song () ()
+(defcommand zbucium-unlove-song () ()
   (unlove-song))
 
 ;; (ql:quickload :local-time)
