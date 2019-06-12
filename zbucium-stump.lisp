@@ -43,7 +43,8 @@ function in a menu-selection."
 (defcommand zbucium-play-artist (artist random)
     ((:string "Artist: ")
      (:y-or-n "Random? "))
-  (play-artist artist *ntracks* random))
+    (when artist
+      (play-artist artist *ntracks* random)))
 
 (defcommand zbucium-play-album (artist)
     ((:string "Artist: "))
