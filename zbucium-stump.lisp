@@ -92,13 +92,6 @@
               (play-artist-album (second selected) (first selected))
               (play-song (second selected) (first selected))))))))
 
-
-;; (zbucium-play-album "anathema")
-;; (setf stumpwm::*menu-maximum-height* 5)
-
-;; (defcommand zbucium-pause () ()
-;;   (pause))
-
 (defcommand zbucium-play/pause () ()
   (play/pause))
 
@@ -174,9 +167,3 @@
 
 (defcommand zbucium-unlove-song () ()
   (unlove-song))
-
-;; (ql:quickload :local-time)
-
-;; (lastfm::track-scrobble "anathema" "one last goodbye"
-;;                         (local-time:timestamp-to-unix
-;;                          (local-time:now)))
