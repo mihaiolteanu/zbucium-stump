@@ -40,6 +40,8 @@ function in a menu-selection."
       (when song
         (play-song artist (first song))))))
 
+(defparameter *my-loved* (user-getlovedtracks "brokendays" 500))
+
 (defcommand zbucium-play-artist (artist random)
     ((:string "Artist: ")
      (:y-or-n "Random? "))
@@ -62,7 +64,7 @@ function in a menu-selection."
                  m))))
         (when selected
           (if (string-equal (third selected) "album")
-              (play-artist-album (second selected) (first selected))
+              (play-album (second selected) (first selected))
               (play-song (second selected) (first selected))))))))
 
 (defcommand zbucium-play-tag (tagname random)
